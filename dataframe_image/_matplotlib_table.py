@@ -10,6 +10,8 @@ from matplotlib import patches as mpatches, lines as mlines
 from matplotlib.transforms import Bbox
 from matplotlib.backends.backend_agg import RendererAgg
 
+RATIO_WIDTH_TO_HEIGHT = 15
+
 
 class TableMaker:
 
@@ -215,7 +217,7 @@ class TableMaker:
                     x += xd
                 elif ha == 'center':
                     x += xd / 2
-                self.fig.text(x, y + yd / 2, text, family='Helvetica',
+                self.fig.text(x, y + yd / 2, text,
                               size=self.fontsize, ha=ha, va='center', weight=weight)
                 if ha == 'left':
                     x += xd
@@ -235,6 +237,15 @@ class TableMaker:
         start = self.figwidth * min(x0, .1)
         end = self.figwidth - start
         bbox = Bbox([[start - .1, y * h], [end + .1, h]])
+
+        # Add padding before and after image if the ratio is not supported by telegram photos
+        width_final = bbox.x1 - bbox.x0
+        height_final = bbox.y1 - bbox.y0
+        if width_final / height_final > RATIO_WIDTH_TO_HEIGHT:
+            shift = (width_final - RATIO_WIDTH_TO_HEIGHT *
+                     height_final) / RATIO_WIDTH_TO_HEIGHT
+            bbox.y0 -= shift / 2
+            bbox.y1 += shift / 2
         buffer = io.BytesIO()
         self.fig.savefig(buffer, bbox_inches=bbox)
         img_str = buffer.getvalue()
